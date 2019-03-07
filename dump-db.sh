@@ -250,16 +250,43 @@ get_rotate_mask(){
 }
 dump(){
     local dir="$BACKUP_PATH/$1/current"
-    local file="$dir/${1}-$file_date.sql.gz"
+    local file="${1}-$file_date"
+    local ext='sql.gz'
+    local tmpfile="/tmp/$file.$ext"
+    local filepath="$dir/$file.$ext"
+    local count=1
+    local copied='0'
+
     mkdir -p "$dir" || abort "Unable mkdir $dir for dump()"
     "$mysqldump" -h"$DB_HOST" -u"$BACKUP_USER" "$MYSQLDUMP_OPTIONS" "$1" | \
-    "$gzip" > "$file"
+      "$gzip" > "$tmpfile"
     if [ "${PIPESTATUS[0]}" -eq 0 ]; then
-        log "$1 dumped to $file"
+        debuglog "$1 dumped to $tmpfile"
     else
-        warn "mysqldump could not complete backup of $1 to $dir"
-        debuglog "Removing gzip artifact $file"
-        rm "$file"
+        warn "mysqldump could not complete backup of $1 to $tmpfile"
+    fi
+    if [ -e "$tmpfile" ]; then
+        while [ "$copied" -eq '0' ]; do
+            debuglog "Copying to $filepath"
+            copied=$(cp -nv "$tmpfile" "$filepath" | awk 'END{print NR}')
+            if [ "$copied" -gt '0' ]; then
+                if [ -e "$tmpfile" ]; then
+                    debuglog "Removing temp file: $tmpfile"
+                    rm "$tmpfile"
+                fi
+                break
+            elif [ -e "$filepath" ]; then
+                warn "[Attempt $count] Failed, because file exists: $filepath"
+                count=$((count + 1))
+                filepath="$dir/$file.$count.$ext"
+                if [ "$count" -gt "100" ]; then
+                    warn "Unable to complete backup after 100 attempts, leaving dump at $tmpfile"
+                    break
+                fi
+            else
+                abort "[Attempt $count] Failed to write to destination: $filepath"
+            fi
+        done
     fi
 }
 rotate(){
