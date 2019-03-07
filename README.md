@@ -71,5 +71,5 @@ If you would like to help take a look at the [list of issues](https://github.com
 ## License
 
 This project is released under the MIT License.
-Copyright © 2019 [Sean Pearce](https://github.com/smpita)
+Copyright © 2019 [Sean Pearce](https://github.com/smpita).
 Please see [License File](https://github.com/smpita/dump-db/blob/master/LICENSE) for more information.
