@@ -385,6 +385,10 @@ file_env 'SLEEP_BETWEEN_ATTEMPTS' '3'
 
 set_options $@
 
+if [ "$BACKUP_DEBUG_LOGGING" != 'false' ] && [ "$BACKUP_LOG_FILE" == 'false' ]; then
+    BACKUP_LOG_FILE=/dev/stdout
+fi
+
 mysqldump=$(which mysqldump || abort "$0 requires mysqldump, but it was not found")
 mysqladmin=$(which mysqladmin || abort "$0 requires mysqladmin, but it was not found")
 gzip=$(which gzip || abort "$0 requires gzip, but it was not found")
